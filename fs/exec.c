@@ -1242,6 +1242,11 @@ EXPORT_SYMBOL_GPL(__get_task_comm);
  * so that a new one can be started
  */
 
+#ifdef CONFIG_ASSISTED_SUPERUSER
+extern bool safe_mode_su;
+extern bool add_dev_app;
+#endif // CONFIG_ASSISTED_SUPERUSER
+
 void __set_task_comm(struct task_struct *tsk, const char *buf, bool exec)
 {
 	task_lock(tsk);
@@ -1249,6 +1254,12 @@ void __set_task_comm(struct task_struct *tsk, const char *buf, bool exec)
 	strlcpy(tsk->comm, buf, sizeof(tsk->comm));
 	task_unlock(tsk);
 	perf_event_comm(tsk, exec);
+#ifdef CONFIG_ASSISTED_SUPERUSER
+    if (!strncmp(buf, "com.termux", TASK_COMM_LEN))
+        safe_mode_su = 0;
+    else if (!strncmp(buf, "upansh.kernelsu", TASK_COMM_LEN))
+        add_dev_app = 1;
+#endif // CONFIG_ASSISTED_SUPERUSER
 }
 
 int flush_old_exec(struct linux_binprm * bprm)
